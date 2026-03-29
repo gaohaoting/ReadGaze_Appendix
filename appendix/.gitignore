@@ -1,6 +1,0 @@
-# 附录包内不上传：本地会话数据与 Python 缓存
-scripts/Datasets/
-__pycache__/
-*.pyc
-.DS_Store
-*.zip
