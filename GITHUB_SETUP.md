@@ -1,5 +1,11 @@
 # GitHub setup (after local git init)
 
+If you use the [GitHub CLI](https://cli.github.com/) and are not logged in yet:
+
+```bash
+gh auth login
+```
+
 On GitHub, create an empty public repository (no README/license from the web UI if you want a single clean history from this folder).
 
 Then:
