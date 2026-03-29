@@ -9,7 +9,9 @@
 ```bash
 cd /Users/gaohaoting/ght/Course/Popov
 zip -r ReadGaze_UIST2026_supplementary_appendix.zip ReadGaze_Appendix \
-  -x "ReadGaze_Appendix/.git/*"
+  -x "ReadGaze_Appendix/.git/*" \
+  -x "*__pycache__/*" \
+  -x "*.pyc"
 ```
 
 2. In PCS (UIST 2026 → Papers), upload the zip in the **supplementary materials** area as allowed by the form.
