@@ -4,6 +4,8 @@
 
 ## Suggested package
 
+From the parent directory of `ReadGaze_Appendix`, the archive `ReadGaze_UIST2026_supplementary_appendix.zip` can be produced with the command below (already run once during setup; re-run after changes).
+
 1. Create a zip of this appendix (exclude `.git` if present):
 
 ```bash
