@@ -25,8 +25,8 @@ If `Datasets/` is empty or missing, the script runs and reports zero sessions (n
 
 ## Anonymized link for submission
 
-Do **not** cite a personal GitHub URL in the anonymized paper. After uploading this repository to GitHub, create an anonymous mirror at [anonymous.4open.science](https://anonymous.4open.science/) and cite **only** that URL. See `ANONYMOUS_MIRROR.md`.
+Do **not** cite a personal GitHub URL in the anonymized paper. After uploading this `appendix/` tree to GitHub, create an anonymous mirror at [anonymous.4open.science](https://anonymous.4open.science/) and cite **only** that URL.
 
 ## PCS upload
 
-Package this folder (or a zip of its contents) as supplementary material in PCS by the materials deadline. See `PCS_UPLOAD.md`.
+Zip **only** this `appendix/` directory (or the repository if it contains solely this folder) and upload as supplementary material by the materials deadline (see `POLICY_CHECKLIST.md`). Maintainer notes for zipping live outside the tracked tree in this repo layout.
