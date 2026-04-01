@@ -1,5 +1,3 @@
-# Git 仅跟踪 `appendix/` 内用于上传/公开仓库的文件；其余文件留在本机但不入库。
 *
 !.gitignore
-!/appendix/
-!/appendix/**
+!ReadGaze_appendix.md
