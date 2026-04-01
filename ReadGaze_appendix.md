@@ -97,9 +97,7 @@ Each mapped fixation is assigned to one of seven AOIs, matching the **Equipmentâ
 
 The authoritative **Object Name â†’ AOI** mapping is maintained in `codebook/Copy of Object Names - Fixation - objectFixationCounts.csv`. The team-lead realtime pipeline applies the same mapping logic via `map_object_to_aoi` in `tools/teamlead_realtime_entropy.py`: exact normalized string match against the codebook, then a containment-based fuzzy fallback if no exact hit. Generic examples (no codebook strings): rhythm or numeric display objects are mapped to **Patient Vitals Monitor**; team-member avatars or generic environmental props typically map to **Other Team Members** when not covered by equipment or patient-specific rules.
 
-**Figure A1.** *Schematic placement of the seven AOIs in the simulation view.*
-
-![AOI layout in the simulation environment.](Figures/AOIInSimulation.png)
+**Figure A1.** *Schematic placement of the seven AOIs in the simulation view (![AOI layout in the simulation environment.](Figures/AOIInSimulation.png)).*
 
 ### Preprocessing and sliding windows
 
