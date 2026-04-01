@@ -1,3 +1,6 @@
+# 仅跟踪附录 Markdown 与 Figures/；其余留在本机。
 *
 !.gitignore
 !ReadGaze_appendix.md
+!/Figures/
+!/Figures/**
