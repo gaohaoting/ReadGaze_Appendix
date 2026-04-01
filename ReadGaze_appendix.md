@@ -99,7 +99,7 @@ The authoritative **Object Name → AOI** mapping is maintained in `codebook/Cop
 
 **Figure A1.** *Schematic placement of the seven AOIs in the simulation view.*
 
-<img src="Figures/AOIInSimulation.png" alt="AOI layout in the simulation environment." width="560" />
+![AOI layout in the simulation environment.](Figures/AOIInSimulation.png)
 
 ### Preprocessing and sliding windows
 
