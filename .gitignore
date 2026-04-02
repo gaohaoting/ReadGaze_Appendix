@@ -2,5 +2,6 @@
 *
 !.gitignore
 !ReadGaze_appendix.md
+!Copy of Object Names - Fixation - objectFixationCounts.csv
 !/Figures/
 !/Figures/**

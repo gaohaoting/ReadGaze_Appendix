@@ -73,101 +73,112 @@ Labels **P1–P10** are **not** the formal user study’s participant IDs; they 
 - **Markdown:** This section can be exported to PDF/HTML for the anonymous supplementary site linked from the main paper (`anonymous.4open.science`).
 
 ## Representation and Validation Details
-This supplement documents area-of-interest (AOI) definitions, fixation preprocessing, Scope–Intensity (routing entropy *H* and weighted self-loop *L*) computation, validation analyses, window-size sensitivity, novice vs expert comparisons, and compact pseudocode. All session-level identifiers are omitted; cohort sizes are reported only in the aggregate.
 
-### Additional AOI definitions and mapping examples
-
-## Representation and Validation Details
-
-This section supplements the manuscript **Representation** layer, **dataset**, and **Dataset and Validation** analyses in `ReadGaze-main.tex`: the AOI set \(\mathcal{A}\), preprocessing, routing entropy *H* (**Scope**) and weighted self-loop prevalence *L* (**Intensity**), validation checks, window-size sensitivity, exploratory cohort contrasts, and pseudocode. **Numeric summaries match the main paper** unless labeled as repository-only diagnostics.
+This supplement documents area-of-interest (AOI) definitions, fixation preprocessing, Scope–Intensity (routing entropy *H* and weighted self-loop *L*) computation, validation analyses, window-size sensitivity, novice vs expert comparisons, and compact pseudocode. It aligns with the manuscript **Representation** layer, **dataset**, and **Dataset and Validation** sections: the AOI set \mathcal{A}, preprocessing, *H* (**Scope**) and *L* (**Intensity**), validation checks, window-size sensitivity, exploratory cohort contrasts, and pseudocode. **Numeric summaries match the main paper** unless labeled as repository-only diagnostics. All session-level identifiers are omitted; cohort sizes are reported only in the aggregate.
 
 ### AOI set and object-to-AOI mapping
 
 Each mapped fixation is assigned to one of seven AOIs, matching the **Equipment–Airway, …, Patient** list in the main text **Representation** section (same semantics as the attention-state table). Internal codes in tooling map to human-readable labels as follows.
 
-| Internal code | Human-readable label |
-|---------------|----------------------|
-| `AOI_AirwayEquipment` | Equipment – Airway |
-| `AOI_CPRHands` | Equipment – CPR |
-| `AOI_DefibEquipment` | Equipment – Defib |
-| `AOI_Meds_Procedure` | Equipment – Meds & IV |
-| `AOI_Monitor` | Patient Vitals Monitor |
-| `AOI_NPC/Other` | Other Team Members (and non-mapped / teleport UI when applicable) |
-| `AOI_PatientCore` | Patient |
 
-The authoritative **Object Name → AOI** mapping is maintained in `codebook/Copy of Object Names - Fixation - objectFixationCounts.csv`. The team-lead realtime pipeline applies the same mapping logic via `map_object_to_aoi` in `tools/teamlead_realtime_entropy.py`: exact normalized string match against the codebook, then a containment-based fuzzy fallback if no exact hit. Generic examples (no codebook strings): rhythm or numeric display objects are mapped to **Patient Vitals Monitor**; team-member avatars or generic environmental props typically map to **Other Team Members** when not covered by equipment or patient-specific rules.
+| Internal code         | Human-readable label                                              |
+| --------------------- | ----------------------------------------------------------------- |
+| `AOI_AirwayEquipment` | Equipment – Airway                                                |
+| `AOI_CPRHands`        | Equipment – CPR                                                   |
+| `AOI_DefibEquipment`  | Equipment – Defib                                                 |
+| `AOI_Meds_Procedure`  | Equipment – Meds & IV                                             |
+| `AOI_Monitor`         | Patient Vitals Monitor                                            |
+| `AOI_NPC/Other`       | Other Team Members (and non-mapped / teleport UI when applicable) |
+| `AOI_PatientCore`     | Patient                                                           |
 
-**Figure A1.** *Schematic placement of the seven AOIs in the simulation view (![AOI layout in the simulation environment.](Figures/AOIInSimulation.png)).*
+
+The authoritative **Object Name → AOI** mapping is a simulation **codebook**: each exported object name is matched—first by **normalized exact string** to a row in the codebook, then by a **containment-style fuzzy fallback** where needed—to one of the seven AOI codes in the table above. Below are **illustrative rows** from that codebook (the full list is longer; this is **not** exhaustive).
+
+| Simulation object name (excerpt) | Object type (excerpt) | AOI |
+| --------------------------------- | --------------------- | --- |
+| `pulse_neck_defib` | PulseCheckPoint(Neck)Defib | `AOI_PatientCore` |
+| `pulse_neck_bvm` | PulseCheckPoint(Neck)Airway | `AOI_PatientCore` |
+| `pulse_groin_defib` | PulseCheckPoint(Groin)Defib | `AOI_PatientCore` |
+| `pulse_groin_bvm` | PulseCheckPoint(Groin)Airway | `AOI_PatientCore` |
+| `female_avatar1` | NPC | `AOI_NPC/Other` |
+
+*Further examples:* `cpr_hands_obbjjj` → `AOI_CPRHands`; `Upper Part Vital Cognitive` → `AOI_Monitor`; `Pump_Mask_Interactable_R(Clone)` → `AOI_AirwayEquipment`; `Sync` → `AOI_DefibEquipment`; `Syringe_Injection_Interactable_Right(Clone)` → `AOI_Meds_Procedure`. Teleport UI interactables (e.g. `Teleport Icon Tablet 2`) are attributed to **`AOI_NPC/Other`** in the seven-AOI scheme used in the manuscript—consistent with the “teleport UI” note in the AOI table—even if an intermediate export uses a dedicated teleport label.
+
+The team-lead realtime pipeline implements the same logic via **map_object_to_aoi** in the team-lead **realtime entropy** tooling. Generic fallbacks when a string is not in the table: rhythm or numeric **vital display** objects → **Patient Vitals Monitor**; team-member avatars or generic environmental props → **Other Team Members** when not covered by equipment- or patient-specific rules.
+
+**Figure A1.** *Schematic placement of the seven AOIs in the simulation view (AOI layout in the simulation environment.).*
 
 ### Preprocessing and sliding windows
 
-**Manuscript pipeline (authoritative).** The paper preprocesses gaze into fixations using **dispersion-based** identification, then **merges adjacent fixations on the same AOI when the inter-fixation gap is ≤ 300 ms**, consistent with the **Input** and **Representation** sections of `ReadGaze-main.tex`. Reported **Scope** (*H*, routing entropy) and **Intensity** (*L*, weighted self-loop prevalence) are computed on **team-leader** fixation streams aligned to simulation time.
+**Manuscript pipeline (authoritative).** The paper preprocesses gaze into fixations using **dispersion-based** identification, then **merges adjacent fixations on the same AOI when the inter-fixation gap is ≤ 300 ms**, consistent with the **Input** and **Representation** sections of the **main manuscript**. Reported **Scope** (*H*, routing entropy) and **Intensity** (*L*, weighted self-loop prevalence) are computed on **team-leader** fixation streams aligned to simulation time.
 
-**Repository tooling (secondary).** Some utilities read role-specific `* - Fixation.csv` exports. The helper `fixation_tool/fixation_tool.py` uses duration **≥ 0.1 s** as a fixation cutoff and shorter events as saccades (`FIXATION_THRESHOLD_S = 0.1`) for certain **off-line transition utilities**. That **0.1 s convention does not replace** dispersion + 300 ms merging for the manuscript’s Scope–Intensity windows; it applies only where those scripts are used.
+**Repository tooling (secondary).** Some utilities read role-specific fixation CSV exports (per-role naming convention). The **fixation-tool** helper uses duration **≥ 0.1 s** as a fixation cutoff and shorter events as saccades (`FIXATION_THRESHOLD_S = 0.1`) for certain **off-line transition utilities**. That **0.1 s convention does not replace** dispersion + 300 ms merging for the manuscript’s Scope–Intensity windows; it applies only where those scripts are used.
 
 - **Team lead only.** Attention-state streams and transition tables for the team-lead role use fixations filtered to the team-lead observer.
-- **Merged AOI segments for transitions.** For attention-transition tabulation (`generate_attention_transition_table.py`), consecutive fixations that map to the **same AOI** along the temporal sequence are merged into one segment before deriving ordered AOI transitions. Object names (and categories where used) are mapped to AOIs via the codebook, with category-level fallbacks (e.g. monitor-like categories → monitor, patient-related → patient core) consistent with the transition-table script.
-- **Sliding windows.** Default window length **W = 30 s**, step **5 s**, as in `compute_realtime_entropy_for_file` in `tools/teamlead_realtime_entropy.py`. Each window’s label time is taken at the **center** of the bin (window start + *W*/2), so the scalars *H* (**Scope**) and *L* (**Intensity**) for that label summarize transitions whose fixation end times fall in \([t_0, t_0 + W)\). Timestamps are aligned to simulation start; centered labeling implies the summary is centered on the plotted time (note for reviewers on smoothing vs causality).
+- **Merged AOI segments for transitions.** For attention-transition tabulation, consecutive fixations that map to the **same AOI** along the temporal sequence are merged into one segment before deriving ordered AOI transitions. Object names (and categories where used) are mapped to AOIs via the codebook, with category-level fallbacks (e.g. monitor-like categories → monitor, patient-related → patient core) consistent with the transition-table utility.
+- **Sliding windows.** Default window length **W = 30 s**, step **5 s**, as implemented in **compute_realtime_entropy_for_file** in the team-lead realtime entropy module. Each window’s label time is taken at the **center** of the bin (window start + *W*/2), so the scalars *H* (**Scope**) and *L* (**Intensity**) for that label summarize transitions whose fixation end times fall in [t_0, t_0 + W). Timestamps are aligned to simulation start; centered labeling implies the summary is centered on the plotted time (note for reviewers on smoothing vs causality).
 
 ### Worked example: Scope–Intensity (*H* = Scope, *L* = Intensity)
 
-The implementation in `compute_routing_metrics` (`tools/teamlead_realtime_entropy.py`) proceeds as follows.
+The **compute_routing_metrics** routine in the team-lead realtime entropy module proceeds as follows.
 
-1. **Transition list.** From fixation-level AOI sequence inside the window, form consecutive pairs \((\text{from}, \text{to})\) (after any AOI merge step used upstream).
-2. **Count matrix.** For each source AOI *i*, tally outgoing counts \(n_{ij}\) to destination *j*. Let \(r_i = \sum_j n_{ij}\) be the row total and \(N = \sum_i r_i\) the total number of transitions.
-3. **Routing entropy *H* (self-loops excluded from the outgoing distribution).** For each source *i* with **off-diagonal mass** \(o_i = \sum_{j \neq i} n_{ij} > 0\), compute Shannon entropy (base 2) over **only** destinations \(j \neq i\), using conditional probabilities \(p_{ij} = n_{ij} / o_i\):
-   \[
-   H_i = -\sum_{j \neq i,\; n_{ij}>0} p_{ij} \log_2 p_{ij}.
-   \]
-   Rows with \(o_i = 0\) contribute **zero** to the entropy numerator; the implementation still increments the weight sum by \(r_i\) for those rows. Because \(\sum_i r_i = N\) over all emitting sources in the window, the reported value is
-   \[
-   H = \frac{1}{N}\sum_{i:\, o_i > 0} H_i \cdot r_i,
-   \]
-   equivalent to `weighted_entropy / weight_sum` in code (with `weight_sum` = \(N\) for the nonempty count matrix).
-4. **Weighted self-loop *L*.** For each source *i*, self-loop proportion \(s_i = n_{ii} / r_i\) (0 if \(r_i = 0\)). The global weighted self-loop is
-   \[
+1. **Transition list.** From fixation-level AOI sequence inside the window, form consecutive pairs (\text{from}, \text{to}) (after any AOI merge step used upstream).
+2. **Count matrix.** For each source AOI *i*, tally outgoing counts n_{ij} to destination *j*. Let r_i = \sum_j n_{ij} be the row total and N = \sum_i r_i the total number of transitions.
+3. **Routing entropy *H* (self-loops excluded from the outgoing distribution).** For each source *i* with **off-diagonal mass** o_i = \sum_{j \neq i} n_{ij} > 0, compute Shannon entropy (base 2) over **only** destinations j \neq i, using conditional probabilities p_{ij} = n_{ij} / o_i:
+
+   H_i = -\sum_{j \neq i, n_{ij}>0} p_{ij} \log_2 p_{ij}.
+   
+   Rows with o_i = 0 contribute **zero** to the entropy numerator; the implementation still increments the weight sum by r_i for those rows. Because \sum_i r_i = N over all emitting sources in the window, the reported value is
+   
+   H = \frac{1}{N}\sum_{i: o_i > 0} H_i \cdot r_i,
+   
+   equivalent to `weighted_entropy / weight_sum` in code (with `weight_sum` = N for the nonempty count matrix).
+4. **Weighted self-loop *L*.** For each source *i*, self-loop proportion s_i = n_{ii} / r_i (0 if r_i = 0). The global weighted self-loop is
+
    L = \sum_i \frac{r_i}{N} \cdot s_i = \frac{1}{N}\sum_i n_{ii}.
-   \]
-   The last equality holds because \(\frac{r_i}{N}\cdot\frac{n_{ii}}{r_i}=\frac{n_{ii}}{N}\); the code implements the weighted form explicitly.
+   
+   The last equality holds because \frac{r_i}{N}\cdot\frac{n_{ii}}{r_i}=\frac{n_{ii}}{N}; the code implements the weighted form explicitly.
 
 **Synthetic toy (three AOIs).** Suppose the window yields these seven transitions in order:  
 X→Y, X→Y, X→X, Y→Z, Y→X, Z→Z, Z→X.
 
-| From \\ To | X | Y | Z | Row total \(r_i\) |
-|------------|---|---|---|-------------------|
-| X | 1 | 2 | 0 | 3 |
-| Y | 1 | 0 | 1 | 2 |
-| Z | 1 | 0 | 1 | 2 |
 
-Here \(N = 7\).
+| From To | X   | Y   | Z   | Row total r_i |
+| ------- | --- | --- | --- | ------------- |
+| X       | 1   | 2   | 0   | 3             |
+| Y       | 1   | 0   | 1   | 2             |
+| Z       | 1   | 0   | 1   | 2             |
 
-- **Row X:** \(o_X = 2\), only Y off-diagonal: \(H_X = -\log_2(1) = 0\).
-- **Row Y:** \(o_Y = 2\), \(p_{Y\to Z}=p_{Y\to X}=\tfrac12\): \(H_Y = 1\) bit.
-- **Row Z:** \(o_Z = 1\), only X: \(H_Z = 0\).
 
-Weighted entropy numerator: \(0\cdot 3 + 1\cdot 2 + 0\cdot 2 = 2\). Weight sum: \(3+2+2 = 7\). **\(H = 2/7 \approx 0.286\)** bits.
+Here N = 7.
 
-Weighted self-loop: \(\frac{3}{7}\cdot\frac{1}{3} + \frac{2}{7}\cdot 0 + \frac{2}{7}\cdot\frac{1}{2} = \frac{2}{7} \approx 0.286\). **\(L = 2/7\)**.
+- **Row X:** o_X = 2, only Y off-diagonal: H_X = -\log_2(1) = 0.
+- **Row Y:** o_Y = 2, p_{Y\to Z}=p_{Y\to X}=\tfrac12: H_Y = 1 bit.
+- **Row Z:** o_Z = 1, only X: H_Z = 0.
 
-This matches `compute_routing_metrics` on the same transition multiset.
+Weighted entropy numerator: 0\cdot 3 + 1\cdot 2 + 0\cdot 2 = 2. Weight sum: 3+2+2 = 7. **H = 2/7 \approx 0.286** bits.
+
+Weighted self-loop: \frac{3}{7}\cdot\frac{1}{3} + \frac{2}{7}\cdot 0 + \frac{2}{7}\cdot\frac{1}{2} = \frac{2}{7} \approx 0.286. **L = 2/7**.
+
+This matches **compute_routing_metrics** on the same transition multiset.
 
 ### Dataset scope (team leader, 14 sessions)
 
-Aligning with the **Dataset and Validation** paragraph in the main text: **14** VR training sessions; **77,041** raw fixations → **40,998** after same-AOI merges with gap ≤ 300 ms; analysis focuses on **team leader** gaze → **2,232** analysis windows (30 s / 5 s step) and **666** contiguous **state segments** after run merging. Cohort labels for exploratory comparisons: **novice** trainee-led sessions **n = 10**, **expert** (ACLS-certified instructor team lead) **n = 4**, as in the manuscript. Repository scripts: `sanitycheck/sanity_check.py` and related reports. No per-session identifiers are listed here.
+Aligning with the **Dataset and Validation** paragraph in the main text: **14** VR training sessions; **77,041** raw fixations → **40,998** after same-AOI merges with gap ≤ 300 ms; analysis focuses on **team leader** gaze → **2,232** analysis windows (30 s / 5 s step) and **666** contiguous **state segments** after run merging. Cohort labels for exploratory comparisons: **novice** trainee-led sessions **n = 10**, **expert** (ACLS-certified instructor team lead) **n = 4**, as in the manuscript. The **sanity-check** script and related reports implement and document these checks. No per-session identifiers are listed here.
 
 ### Validation (order matches the main text)
 
-The four **primary** checks below follow the same order as **Dataset and Validation** in `ReadGaze-main.tex` (internal consistency → temporal coherence → construct validity → cross-session stability). Repository labels **V1–V4** are noted for cross-walking to `sanitycheck` logs.
+The four **primary** checks below follow the same order as **Dataset and Validation** in the **main manuscript** (internal consistency → temporal coherence → construct validity → cross-session stability). Repository labels **V1–V4** are noted for cross-walking to the validation logs.
 
 #### 1. Internal consistency (distinct AOI signatures by state; repo: V2)
 
 **Method.** For every analysis window, AOI-level measures are pooled **within each classified state** across all sessions. **Mean unique AOI count** and **mean dominant AOI proportion** are computed on that pooled sample (not “mean per session then mean of means”). Mean *H* (**Scope**) and mean *L* (**Intensity**) are descriptive aggregates over windows assigned to each state.
 
-**Results (illustrative).** **S1 (Broad Scanning)** vs **S4 (Sustained Fixation)**: mean unique AOI count **4.52** vs **3.19**; mean dominant proportion **0.617** vs **0.741**. Patterns align with the **Attention-state semantics** table in the manuscript: higher *H* (**Scope**) for broad scanning, higher dominant-AOI concentration for **S4 (Sustained Fixation)**. Full state × metric tables: `sanitycheck/sanity_check_report_en.md`.
+**Results (illustrative).** **S1 (Broad Scanning)** vs **S4 (Sustained Fixation)**: mean unique AOI count **4.52** vs **3.19**; mean dominant proportion **0.617** vs **0.741**. Patterns align with the **Attention-state semantics** table in the manuscript: higher *H* (**Scope**) for broad scanning, higher dominant-AOI concentration for **S4 (Sustained Fixation)**. Full state × metric tables appear in the **extended sanity-check report** (English supplementary).
 
 #### 2. Temporal coherence (segment duration and flip rate; repo: V3)
 
-**Method.** Contiguous runs of the same state yield segment durations. **Median / mean** duration statistics are computed on **pooled** segments. **Flips per minute** = per session, \((\#\text{segments} - 1) / \text{session duration in minutes}\), then **mean across sessions**.
+**Method.** Contiguous runs of the same state yield segment durations. **Median / mean** duration statistics are computed on **pooled** segments. **Flips per minute** = per session, (\text{segments} - 1) / \text{session duration in minutes}, then **mean across sessions**.
 
 **Results.** **666** segments total; **median** duration **10.0 s**, **mean** **16.8 s**; **63.4%** of segments ≥ **10 s**; mean flip rate **3.54** flips/min (typical per-session range about **2.7–5.0** flips/min). Longest observed bout **120 s**.
 
@@ -175,33 +186,33 @@ The four **primary** checks below follow the same order as **Dataset and Validat
 
 **Method.** Shock times come from the action log (defibrillation shocks performed by the defib role). Asymmetric bins: **Pre** (−10–0 s), **Post** (0–15 s), **Late** (15–30 s) relative to each shock; **Baseline** = windows not in any shock-relative bin. **Wilcoxon signed-rank** tests use **one summary per session** (e.g. proportion of windows in Post vs Baseline), avoiding pseudoreplication of windows.
 
-**Results (aggregate).** All **14** sessions contribute shock events (**83** shocks total). Example window counts: Pre **133**, Post **204**, Late **183**, Baseline **1712**. Baseline state mix approximately **S1 23.6%**, **S2 24.1%**, **S3 21.0%**, **S4 31.3%**. Post-window **S1 (Broad Scanning)** proportion **51.5%** vs baseline **23.6%** (**+27.9** percentage points unweighted). Session-level **Post vs Baseline** on **S1**: median Post **50.0%** vs Baseline **23.6%**, **W = 1**, **p = .0002**, **r = .864**, **13/14** sessions in the expected direction. **Pre vs Baseline** on **S4 (Sustained Fixation)**: medians **8.3%** vs **33.3%**, **p = .002**, **r = .780**. Other contrasts: `sanitycheck/sanity_check_report_en.md`.
+**Results (aggregate).** All **14** sessions contribute shock events (**83** shocks total). Example window counts: Pre **133**, Post **204**, Late **183**, Baseline **1712**. Baseline state mix approximately **S1 23.6%**, **S2 24.1%**, **S3 21.0%**, **S4 31.3%**. Post-window **S1 (Broad Scanning)** proportion **51.5%** vs baseline **23.6%** (**+27.9** percentage points unweighted). Session-level **Post vs Baseline** on **S1**: median Post **50.0%** vs Baseline **23.6%**, **W = 1**, **p = .0002**, **r = .864**, **13/14** sessions in the expected direction. **Pre vs Baseline** on **S4 (Sustained Fixation)**: medians **8.3%** vs **33.3%**, **p = .002**, **r = .780**. Other contrasts appear in the **extended sanity-check report**.
 
 #### 4. Cross-session stability in *H*–*L* space
 
-**Method.** Each window is plotted in the *H*–*L* plane. Classification into **S1–S4** uses **per-session** medians of *H* and *L* as thresholds \(T_H\), \(T_L\) (see Pseudocode 3)—**canonical** for all reported analyses.
+**Method.** Each window is plotted in the *H*–*L* plane. Classification into **S1–S4** uses **per-session** medians of *H* and *L* as thresholds T_H, T_L (see Pseudocode 3)—**canonical** for all reported analyses.
 
-**Global visualization (optional).** For **pooled** *H* and *L* across sessions only, the main text reports example **global** medians **T_E = 0.943** and **T_L = 0.701** (routing entropy and self-loop prevalence) showing the same quadrant structure as the **Scope–Intensity** figure in the manuscript; reference implementation context: `sanitycheck/CONTEXT.md`, `sanitycheck/visualize_v2.py`. **Analysis** always uses **session-relative** medians unless explicitly noted.
+**Global visualization (optional).** For **pooled** *H* and *L* across sessions only, the main text reports example **global** medians **T_E = 0.943** and **T_L = 0.701** (routing entropy and self-loop prevalence) showing the same quadrant structure as the **Scope–Intensity** figure in the manuscript; reference implementation context includes supplementary validation notes and a **pooling visualization** utility. **Analysis** always uses **session-relative** medians unless explicitly noted.
 
 #### Supplementary: clinical stage boundaries (repo: V4)
 
 **Method.** Compare state flip rate near clinical stage boundaries vs within-stage intervals.
 
-**Result.** **Weak signal**: **5/14** sessions show higher boundary flip rate; aggregate boundary vs interior difference about **+0.3%**. Exploratory only (`sanitycheck/sanity_check_report_en.md`).
+**Result.** **Weak signal**: **5/14** sessions show higher boundary flip rate; aggregate boundary vs interior difference about **+0.3%**. Exploratory only (see **extended sanity-check report**).
 
 ### Window-size sensitivity
 
 **Method.** Recompute *H* and *L* with **W ∈ {20, 30, 45} s**, step **5 s**. Reclassify states using **per-window-size** median thresholds; compute **Cohen’s κ** between label sequences on the same timeline for each session; report mean κ across sessions.
 
-**Results (14 sessions).** Adjacent pairs: **W = 20 vs 30 s**: mean κ **0.533** (SD **0.060**); **W = 30 vs 45 s**: mean κ **0.539** (SD **0.075**). **W = 20 vs 45 s**: mean κ **0.372**. Overall mean κ across the three pairings **~0.48**. State **occupancy** percentages are stable across *W* (e.g. each state roughly **28–31%** depending on *W*). Mean flip rate decreases with larger *W* (e.g. **4.32**, **3.45**, **2.69** flips/min for 20 / 30 / 45 s). Implementation: `sanitycheck/sensitivity_analysis.py`; tables: `sanitycheck/sensitivity_analysis_kappa.csv`, `sensitivity_analysis_summary.csv`.
+**Results (14 sessions).** Adjacent pairs: **W = 20 vs 30 s**: mean κ **0.533** (SD **0.060**); **W = 30 vs 45 s**: mean κ **0.539** (SD **0.075**). **W = 20 vs 45 s**: mean κ **0.372**. Overall mean κ across the three pairings **~0.48**. State **occupancy** percentages are stable across *W* (e.g. each state roughly **28–31%** depending on *W*). Mean flip rate decreases with larger *W* (e.g. **4.32**, **3.45**, **2.69** flips/min for 20 / 30 / 45 s). Implementation uses the **window-size sensitivity** analysis script; Cohen’s **κ** and summary statistics are exported as tabular outputs alongside that script.
 
 ### Expert / novice comparison (exploratory)
 
-**Cohort assignment.** As in the manuscript (Section **Dataset and Validation**): sessions led by **ACLS-certified instructors** are **expert** (**n = 4**); sessions led by **residents or students** are **novice** (**n = 10**). The repository uses a deterministic prefix rule on internal keys (`classify_group` / `EXPERT_PREFIXES` in `sanitycheck/monitor_analysis.py`); literal prefixes are not listed here.
+**Cohort assignment.** As in the manuscript (Section **Dataset and Validation**): sessions led by **ACLS-certified instructors** are **expert** (**n = 4**); sessions led by **residents or students** are **novice** (**n = 10**). The repository uses a deterministic prefix rule on internal keys (**classify_group** / **EXPERT_PREFIXES** in the exploratory **monitor-analysis** module); literal prefixes are not listed here.
 
-**Statistics.** **Mann–Whitney *U*** tests on **session-level** summaries compare cohorts (two-sided, nonparametric). **Plan A** (`monitor_analysis.py`): overall monitor dwell and visit patterns. **Plan B**: monitor time **conditioned on** classified state (e.g. share of monitor fixation time falling in each state, and within-state monitor proportion). **State occupancy** (time in S1–S4) showed **no** meaningful cohort differences in the exploratory report (`sanitycheck/group_comparison_report.md`, all *p* > .67). Significant or trend differences reported there include, at session level: **total monitor dwell %** lower in the expert cohort than trainees (approximately **12%** vs **22%**, *p* < .05), and exploratory metrics such as bout transition entropy and NPC/other dwell (*p* < .10). 
+**Statistics.** **Mann–Whitney *U*** tests on **session-level** summaries compare cohorts (two-sided, nonparametric). **Plan A** (monitor-analysis script): overall monitor dwell and visit patterns. **Plan B**: monitor time **conditioned on** classified state (e.g. share of monitor fixation time falling in each state, and within-state monitor proportion). **State occupancy** (time in S1–S4) showed **no** meaningful cohort differences in the exploratory **group-comparison** report (all *p* > .67). Significant or trend differences reported there include, at session level: **total monitor dwell %** lower in the expert cohort than trainees (approximately **12%** vs **22%**, *p* < .05), and exploratory metrics such as bout transition entropy and NPC/other dwell (*p* < .10). 
 
-**Exploratory bout transition.** Compressed state sequences (bouts) can be compared for transition probabilities; one reported contrast is **S4→S1** more frequent in trainees than in experts (e.g. **~3%** vs **~1%** session-level prevalence in the exploratory analysis, *p* < .05; see also `sanitycheck/state_transition_analysis_report.md` for effect size **r ≈ 0.58** on a related bout metric). These are **hypothesis-generating**, not confirmatory.
+**Exploratory bout transition.** Compressed state sequences (bouts) can be compared for transition probabilities; one reported contrast is **S4→S1** more frequent in trainees than in experts (e.g. **~3%** vs **~1%** session-level prevalence in the exploratory analysis, *p* < .05; see also the **state-transition** exploratory report for effect size **r ≈ 0.58** on a related bout metric). These are **hypothesis-generating**, not confirmatory.
 
 ### Pseudocode
 
