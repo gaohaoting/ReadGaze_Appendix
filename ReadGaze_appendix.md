@@ -103,7 +103,7 @@ Seven AOIs (codes ↔ labels) match the main text **Representation** / attention
 
 **Figure A1.** Seven-AOI layout in the simulation view.
 
-![AOI layout in the simulation environment.](Figures/AOIInSimulation.png)
+![AOI layout in the simulation environment.](AOIInSimulation.png)
 
 ### Preprocessing and sliding windows
 
