@@ -386,7 +386,7 @@ Maps to **Teacher Noticing**: **Attending**, **Interpreting** (Jacobs et al.).
 
 ### Coding details for primitive engagement and reasoning change
 
-**Primitive engagement (observable traces).** State-strip navigation; State inspection; Transition querry; Diganostic notes; Evidence box; ShapeDebriefing; state readout aligned to video; moment found **via** primitives vs **mostly** scrubbing.
+**Primitive engagement (observable traces).** State-strip navigation; State inspection; Transition query; Diagnostic notes; Evidence box; ShapeDebriefing; state readout aligned to video; moment found **via** primitives vs **mostly** scrubbing.
 
 **Coding legend (cf. main Table 1.3).** **✓** = independent; **✓✓** = primary reliance; **(P)** = after prompt; **(A)** = acknowledged, rare self-initiation; **—** = not seen.
 
