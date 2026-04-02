@@ -72,7 +72,7 @@ Labels **P1–P10** are **not** the formal user study’s participant IDs; they 
 
 ## Representation and Validation Details
 
-**Contents:** AOI set \mathcal{A} and object→AOI examples; preprocessing and **30 s / 5 s** windows; *H* (**Scope**) and *L* (**Intensity**) worked example; **14-session** counts; validation checks **V1–V4**; window-size **κ**; cohort splits; pseudocode. **Numbers below match the main paper** unless noted. **No** session IDs; cohorts are aggregate-only.
+**Contents:** AOI set $\mathcal{A}$ and object→AOI examples; preprocessing and **30 s / 5 s** windows; *H* (**Scope**) and *L* (**Intensity**) worked example; **14-session** counts; validation checks **V1–V4**; window-size **κ**; cohort splits; pseudocode. **Numbers below match the main paper** unless noted. **No** session IDs; cohorts are aggregate-only.
 
 ### AOI set and object-to-AOI mapping
 
@@ -110,49 +110,59 @@ Seven AOIs (codes ↔ labels) match the main text **Representation** / attention
 **Manuscript pipeline.** **Dispersion-based** fixations; **merge** same-AOI fixations when gap **≤ 300 ms** (see main text **Input** / **Representation**). **Scope** *H* and **Intensity** *L* on **team-lead** streams, simulation time.
 
 - **Merged AOI segments for transitions.** For attention-transition tabulation, consecutive fixations that map to the **same AOI** along the temporal sequence are merged into one segment before deriving ordered AOI transitions. Object names (and categories where used) are mapped to AOIs via the codebook, with category-level fallbacks (e.g. monitor-like categories → monitor, patient-related → patient core) consistent with the transition-table utility.
-- **Sliding windows.** **W = 30 s**, step **5 s**; label time = window center **t_0 + W/2**; *H* / *L* summarize transitions with end times in **[t_0, t_0 + W)** (simulation-aligned).
+- **Sliding windows.** **W = 30 s**, step **5 s**; label time = window center **$t_0 + W/2$**; *H* / *L* summarize transitions with end times in **$[t_0,\, t_0 + W)$** (simulation-aligned).
 
 ### Worked example: Scope–Intensity (*H* = Scope, *L* = Intensity)
 
 The **compute_routing_metrics** routine in the team-lead realtime entropy module proceeds as follows.
 
-1. **Transition list.** From fixation-level AOI sequence inside the window, form consecutive pairs (\text{from}, \text{to}) (after any AOI merge step used upstream).
-2. **Count matrix.** For each source AOI *i*, tally outgoing counts n_{ij} to destination *j*. Let r_i = \sum_j n_{ij} be the row total and N = \sum_i r_i the total number of transitions.
-3. **Routing entropy *H* (self-loops excluded from the outgoing distribution).** For each source *i* with **off-diagonal mass** o_i = \sum_{j \neq i} n_{ij} > 0, compute Shannon entropy (base 2) over **only** destinations j \neq i, using conditional probabilities p_{ij} = n_{ij} / o_i:
+1. **Transition list.** From fixation-level AOI sequence inside the window, form consecutive pairs $(\text{from}, \text{to})$ (after any AOI merge step used upstream).
+2. **Count matrix.** For each source AOI *i*, tally outgoing counts $n_{ij}$ to destination *j*. Let $r_i = \sum_j n_{ij}$ be the row total and $N = \sum_i r_i$ the total number of transitions.
+3. **Routing entropy *H* (self-loops excluded from the outgoing distribution).** For each source *i* with **off-diagonal mass** $o_i = \sum_{j \neq i} n_{ij} > 0$, compute Shannon entropy (base 2) over **only** destinations $j \neq i$, using conditional probabilities $p_{ij} = n_{ij} / o_i$:
 
-   H_i = -\sum_{j \neq i, n_{ij}>0} p_{ij} \log_2 p_{ij}.
-   
-   Rows with o_i = 0 contribute **zero** to the entropy numerator; the implementation still increments the weight sum by r_i for those rows. Because \sum_i r_i = N over all emitting sources in the window, the reported value is
-   
-   H = \frac{1}{N}\sum_{i: o_i > 0} H_i \cdot r_i,
-   
+   $$
+   H_i = -\sum_{j \neq i,\, n_{ij}>0} p_{ij} \log_2 p_{ij}.
+   $$
+
+   Rows with $o_i = 0$ contribute **zero** to the entropy numerator; the implementation still increments the weight sum by $r_i$ for those rows. Because $\sum_i r_i = N$ over all emitting sources in the window, the reported value is
+
+   $$
+   H = \frac{1}{N}\sum_{i:\, o_i > 0} H_i \cdot r_i,
+   $$
+
    equivalent to `weighted_entropy / weight_sum` in code (with `weight_sum` = N for the nonempty count matrix).
-4. **Weighted self-loop *L*.** For each source *i*, self-loop proportion s_i = n_{ii} / r_i (0 if r_i = 0). The global weighted self-loop is
+4. **Weighted self-loop *L*.** For each source *i*, self-loop proportion $s_i = n_{ii} / r_i$ (0 if $r_i = 0$). The global weighted self-loop is
 
+   $$
    L = \sum_i \frac{r_i}{N} \cdot s_i = \frac{1}{N}\sum_i n_{ii}.
-   
-   The last equality holds because \frac{r_i}{N}\cdot\frac{n_{ii}}{r_i}=\frac{n_{ii}}{N}; the code implements the weighted form explicitly.
+   $$
+
+   The last equality holds because $\frac{r_i}{N}\cdot\frac{n_{ii}}{r_i}=\frac{n_{ii}}{N}$; the code implements the weighted form explicitly.
 
 **Synthetic toy (three AOIs).** Suppose the window yields these seven transitions in order:  
 X→Y, X→Y, X→X, Y→Z, Y→X, Z→Z, Z→X.
 
 
-| From To | X   | Y   | Z   | Row total r_i |
+| From To | X   | Y   | Z   | Row total $r_i$ |
 | ------- | --- | --- | --- | ------------- |
 | X       | 1   | 2   | 0   | 3             |
 | Y       | 1   | 0   | 1   | 2             |
 | Z       | 1   | 0   | 1   | 2             |
 
 
-Here N = 7.
+Here $N = 7$.
 
-- **Row X:** o_X = 2, only Y off-diagonal: H_X = -\log_2(1) = 0.
-- **Row Y:** o_Y = 2, p_{Y\to Z}=p_{Y\to X}=\tfrac12: H_Y = 1 bit.
-- **Row Z:** o_Z = 1, only X: H_Z = 0.
+- **Row X:** $o_X = 2$, only Y off-diagonal: $H_X = -\log_2(1) = 0$.
+- **Row Y:** $o_Y = 2$, $p_{Y\to Z}=p_{Y\to X}=\frac{1}{2}$: $H_Y = 1$ bit.
+- **Row Z:** $o_Z = 1$, only X: $H_Z = 0$.
 
-Weighted entropy numerator: 0\cdot 3 + 1\cdot 2 + 0\cdot 2 = 2. Weight sum: 3+2+2 = 7. **H = 2/7 \approx 0.286** bits.
+Weighted entropy numerator: $0\cdot 3 + 1\cdot 2 + 0\cdot 2 = 2$. Weight sum: $3+2+2 = 7$. **$H = \frac{2}{7} \approx 0.286$** bits.
 
-Weighted self-loop: \frac{3}{7}\cdot\frac{1}{3} + \frac{2}{7}\cdot 0 + \frac{2}{7}\cdot\frac{1}{2} = \frac{2}{7} \approx 0.286. **L = 2/7**.
+$$
+\frac{3}{7}\cdot\frac{1}{3} + \frac{2}{7}\cdot 0 + \frac{2}{7}\cdot\frac{1}{2} = \frac{2}{7} \approx 0.286.
+$$
+
+**$L = \frac{2}{7}$**.
 
 This matches **compute_routing_metrics** on the same transition multiset.
 
@@ -195,9 +205,9 @@ Labels **V1–V4** = internal logging IDs for the four checks below.
 
 #### 4. Cross-session stability in *H*–*L* space
 
-**Method.** Each window is plotted in the *H*–*L* plane. Classification into **S1–S4** uses **per-session** medians of *H* and *L* as thresholds T_H, T_L (see Pseudocode 3)—**canonical** for all reported analyses.
+**Method.** Each window is plotted in the *H*–*L* plane. Classification into **S1–S4** uses **per-session** medians of *H* and *L* as thresholds $T_H$, $T_L$ (see Pseudocode 3)—**canonical** for all reported analyses.
 
-**Pooled medians (optional figure only).** Across all sessions, example global **T_E = 0.943**, **T_L = 0.701** (same quadrant layout as main **Scope–Intensity** figure). **Reported statistics** use **per-session** medians unless stated otherwise.
+**Pooled medians (optional figure only).** Across all sessions, example global **$T_E = 0.943$**, **$T_L = 0.701$** (same quadrant layout as main **Scope–Intensity** figure). **Reported statistics** use **per-session** medians unless stated otherwise.
 
 #### Supplementary: clinical stage boundaries (V4)
 
@@ -207,7 +217,7 @@ Labels **V1–V4** = internal logging IDs for the four checks below.
 
 ### Window-size sensitivity
 
-**Method.** Recompute *H* and *L* with **W ∈ {20, 30, 45} s**, step **5 s**. Reclassify states using **per-window-size** median thresholds; compute **Cohen’s κ** between label sequences on the same timeline for each session; report mean κ across sessions.
+**Method.** Recompute *H* and *L* with **$W \in \{20, 30, 45\}\ \text{s}$**, step **5 s**. Reclassify states using **per-window-size** median thresholds; compute **Cohen’s κ** between label sequences on the same timeline for each session; report mean $\kappa$ across sessions.
 
 **Results (14 sessions).**
 
