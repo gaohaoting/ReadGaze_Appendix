@@ -303,13 +303,15 @@ OUTPUT: test statistic, p-value, effect size r
 | S1 (Broad Scanning) | **16.17** |
 | S4 (Sustained Fixation) | **33.16** |
 
+**S1/S4 only.** State-stratified novice vs expert monitor-% contrasts in the cohort tally **concentrate in S1 and S4**, not **S2/S3**; expert P90 flags apply **only** to **S1** and **S4** windows (main text **Dataset and Validation**).
+
 **Rules (proportion only).**
 
 | If | Then |
 | -- | ---- |
 | State **S1**, monitor % **> 16.17** | Flag |
 | State **S4**, monitor % **> 33.16** | Flag |
-| **S2/S3** | No P90 rule in this track |
+| State **S2** or **S3** | No flag (no P90 threshold on this track) |
 
 **Numeric examples:**
 
@@ -334,7 +336,7 @@ OUTPUT: test statistic, p-value, effect size r
 | Stimulus | One **first-half** sim video per run |
 | Order | Latin square (main text) |
 | After each condition | **A1–A3** |
-| After both | **D1–D7**, **SUS** (ReadGaze only for SUS) |
+| After both | **D1–D7** |
 | Baseline | Video + stages + events + transcript (no gaze-norming language to participant) |
 | ReadGaze | Adds states, diagnostic notes, evidence jumps (**descriptive** cues) |
 
@@ -406,7 +408,6 @@ Survey order = deployed **field** instrument. **A1** = **two** items (mental eff
 | D3–D5 | After both conditions | Preference, primary benefit, primary concern (mixed formats) |
 | D6 AIM | After both conditions | ReadGaze acceptability (4 items) |
 | D7 FIM | After both conditions | ReadGaze feasibility (2 items) |
-| SUS | After both conditions | **ReadGaze only**; standard 10-item System Usability Scale (1–5), **standard SUS scoring** with alternating polarity |
 
 ### Instrument wording and descriptive summaries
 
@@ -452,7 +453,6 @@ Survey order = deployed **field** instrument. **A1** = **two** items (mental eff
 | D4 (modal themes) | Attention interpretation; verification / traceability |
 | D5 (count) | **6/7** cite information load as top concern |
 | AIM / FIM mean | **5.32 / 4.93** (1–7) |
-| SUS mean | **55.7** |
 | A1 paired Δ | Mental effort **+1.57** (ReadGaze − Baseline); time pressure **+0.57** |
 | A2 paired | ReadGaze **6.04** vs Baseline **5.38** (**+0.66**); **6/7** favor ReadGaze |
 | A3 | Forward items stable; reverse-keyed means in range per protocol |
